@@ -1,7 +1,12 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+# When this file exists, EAS Build uses it (instead of .gitignore) to decide
+# which files to upload. Mirror .gitignore here, but DO NOT list
+# google-services.json so it gets uploaded to the build while staying out of git.
 
 # dependencies
 node_modules/
+
+# standalone push notification server (not part of the app build)
+push-backend/
 
 # Expo
 .expo/
@@ -41,5 +46,3 @@ app-example
 # generated native folders
 /ios
 /android
-google-services.json
-streak-app-c7c9c-firebase-adminsdk-fbsvc-c044ff3372.json
