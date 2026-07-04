@@ -167,7 +167,7 @@ export const SETTINGS_PROFILE = {
 
 export const getHabitColor = (category: HabitCategory) => theme.colors.habit[category] ?? theme.colors.accent.DEFAULT;
 
-export const getHabitIcon = (category: HabitCategory, size = 22, color = theme.colors.accent.DEFAULT) => {
+export const getHabitIcon = (category: HabitCategory, size = 22, color: string = theme.colors.accent.DEFAULT) => {
   switch (category) {
     case 'water':
       return <Droplet size={size} color={color} />;

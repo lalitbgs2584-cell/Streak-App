@@ -17,10 +17,10 @@ export default function HabitsScreen() {
 
   return (
     <Screen padded={false} edges={['top', 'bottom']}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <ScreenTitle title="All Habits" subtitle="A compact view of every habit in the stack." />
-          <TouchableOpacity style={styles.addButton} activeOpacity={0.85} onPress={() => router.push('/new-habit')}>
+          <TouchableOpacity style={styles.addButton} activeOpacity={0.85} onPress={() => router.push('../../new-habit')}>
             <Plus size={18} color={theme.colors.accent.text} strokeWidth={3} />
           </TouchableOpacity>
         </View>
@@ -43,7 +43,7 @@ export default function HabitsScreen() {
               key={habit.id}
               activeOpacity={0.85}
               style={styles.habitCard}
-              onPress={() => router.push({ pathname: '/(tabs)/today/[id]', params: { id: habit.id } })}
+              onPress={() => router.push({ pathname: '../today/[id]', params: { id: habit.id } })}
             >
               <HabitBadge category={habit.category} size={56} />
               <View style={styles.habitBody}>

@@ -50,7 +50,7 @@ export default function HistoryScreen() {
 
   return (
     <Screen padded={false} edges={['top', 'bottom']}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <ScreenTitle
           title="History"
           subtitle="A simple calendar-style summary of completed days."
@@ -71,8 +71,8 @@ export default function HistoryScreen() {
           </View>
 
           <View style={styles.weekRow}>
-            {WEEKDAY_SHORT.map((label) => (
-              <Text key={label} style={styles.weekLabel}>
+            {WEEKDAY_SHORT.map((label, index) => (
+              <Text key={`weekday-${index}`} style={styles.weekLabel}>
                 {label}
               </Text>
             ))}

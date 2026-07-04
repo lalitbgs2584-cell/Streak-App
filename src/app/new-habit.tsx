@@ -7,7 +7,8 @@ import { AccentPill, WEEKDAY_SHORT } from '@/lib/mock/habit-ui';
 import { theme } from '@/lib/theme';
 import { useHabits } from '@/lib/hooks/use-habits';
 import { getHabitDraft, resetHabitDraft, setHabitDraft } from '@/lib/store/habit-draft';
-import { DEFAULT_EMOJIS, HabitCategory, formatReminderLabel, parseTimeString } from '@/lib/habits/types';
+import { DEFAULT_EMOJIS, HabitCategory,  parseTimeString } from '@/lib/habits/types';
+import { formatReminderLabel } from '@/lib/habits/storage';
 
 const { width } = Dimensions.get('window');
 const GRID_ITEM_WIDTH = (width - 40 - 24) / 4;

@@ -6,7 +6,7 @@ A mobile habit tracker built with Expo Router that demonstrates local notificati
 
 
 - **Demo Video:** TBD
-- **Development Build:** (https://expo.dev/accounts/dev_lalit_kumar/projects/13_assignment-streak/builds/17b00699-e234-4cf9-b6cd-4977112db0a1)
+- **Development Build:** (https://expo.dev/accounts/dev_lucy/projects/13_assignment-streak/builds/3fc3f1e7-ecd3-421a-873a-f2cc7ad1e0cf)
 
 ## Features
 

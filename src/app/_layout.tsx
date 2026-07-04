@@ -1,11 +1,12 @@
 import { AppBackground } from '@/components/layout/AppBackground';
 import { HabitProvider } from '@/context/HabitContext';
 import { TokenProvider, useToken } from '@/lib/context/Token.context';
+import { useHabits } from '@/lib/hooks/use-habits';
 import { usePushNotifications } from '@/lib/hooks/use-push-notifications';
+import { theme } from '@/lib/theme';
 import { Stack } from 'expo-router';
 import React, { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { useHabits } from '@/lib/hooks/use-habits';
 
 function NotificationBootstrapper() {
   const { token, status } = usePushNotifications();
@@ -38,7 +39,7 @@ export default function RootLayout() {
             <Stack
               screenOptions={{
                 headerShown: false,
-                contentStyle: { backgroundColor: 'transparent' },
+                contentStyle: { backgroundColor: theme.colors.background.primary },
               }}
             >
               <Stack.Screen name="index" options={{ headerShown: false }} />

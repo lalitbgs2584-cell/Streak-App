@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import * as Notifications from 'expo-notifications';
-import { router } from 'expo-router';
+import { router, Href } from 'expo-router';
 import { registerForPushNotificationsAsync, setupNotificationChannel } from '@/lib/notifications/setup.notifications';
 import { normalizeTapTarget } from '@/lib/notifications/habit-notifications';
-
 type PushStatus = 'loading' | 'granted' | 'denied' | 'unavailable';
 
 export function usePushNotifications() {
@@ -20,7 +19,7 @@ export function usePushNotifications() {
 
       const target = normalizeTapTarget(response.notification.request.content.data);
       if (target) {
-        router.push(target);
+        router.push(target as Href);
       }
     };
 
@@ -44,7 +43,7 @@ export function usePushNotifications() {
 
     void bootstrap();
 
-    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+    const subscription = Notifications.addNotificationResponseReceivedListener((response: Notifications.NotificationResponse) => {
       routeFromResponse(response);
     });
 

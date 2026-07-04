@@ -58,7 +58,7 @@ let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
 async function getDb() {
   if (!dbPromise) {
-    dbPromise = SQLite.openDatabaseAsync('habit-tracker.db').then(async (db) => {
+    dbPromise = SQLite.openDatabaseAsync('habit-tracker.db').then(async (db: SQLite.SQLiteDatabase) => {
       await db.execAsync(`
         PRAGMA journal_mode = WAL;
         PRAGMA foreign_keys = ON;
@@ -110,7 +110,7 @@ async function getDb() {
         );
       `);
 
-      const profileCount = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM app_profile');
+      const profileCount = (await db.getFirstAsync('SELECT COUNT(*) as count FROM app_profile')) as { count: number } | null;
       if (!profileCount?.count) {
         const now = new Date().toISOString();
         await db.runAsync(
@@ -132,7 +132,7 @@ async function getDb() {
         );
       }
 
-      const habitCount = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM habits');
+      const habitCount = (await db.getFirstAsync('SELECT COUNT(*) as count FROM habits')) as { count: number } | null;
       if (!habitCount?.count) {
         const now = new Date().toISOString();
         const seedHabitData: Array<Pick<HabitInput, 'title' | 'category' | 'reminderTime' | 'repeatDays'> & { description: string }> = [

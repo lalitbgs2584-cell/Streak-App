@@ -40,7 +40,10 @@
       [
         "expo-notifications",
         {
-          "icon":"./assets/expo.icon/Assets/app-icon.png"
+          "icon": "./assets/expo.icon/Assets/app-icon.png",
+          "sounds": [
+            "./assets/expo.icon/Assets/notification.wav"
+          ]
         }
       ],
       "expo-background-task",
@@ -54,9 +57,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "a8b792a5-03bc-4271-b675-fba34700b6df"
+        "projectId": "bf9a763e-03e9-4d9d-97ae-7c5690055d65"
       }
     },
-    "owner": "dev_lalit_kumar"
+    "owner": "dev_lucy"
   }
 }

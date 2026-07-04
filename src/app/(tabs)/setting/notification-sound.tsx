@@ -10,7 +10,7 @@ export default function NotificationSoundScreen() {
 
   return (
     <Screen padded={false} edges={['top', 'bottom']}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.iconButton} onPress={() => router.back()} activeOpacity={0.85}>
             <ChevronLeft size={22} color={theme.colors.text.primary} />

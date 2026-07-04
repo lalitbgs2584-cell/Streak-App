@@ -18,14 +18,14 @@
 import { theme } from '@/lib/theme';
 import React, { PropsWithChildren } from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  View,
-  StyleSheet,
-  RefreshControl,
+    KeyboardAvoidingView,
+    Platform,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    View,
 } from 'react-native';
-import { SafeAreaView, Edge } from 'react-native-safe-area-context';
+import { Edge, SafeAreaView } from 'react-native-safe-area-context';
 
 
 type Props = PropsWithChildren<{
@@ -36,6 +36,8 @@ type Props = PropsWithChildren<{
   onRefresh?: () => void;        // enables pull-to-refresh (requires scroll)
   refreshing?: boolean;
 }>;
+
+const EXTRA_BOTTOM_SPACING = theme.spacing.huge + theme.spacing.sm;
 
 export function Screen({
   children,
@@ -48,6 +50,7 @@ export function Screen({
 }: Props) {
   const content = scroll ? (
     <ScrollView
+      style={styles.flex}
       contentContainerStyle={[styles.scrollContent, padded && styles.padded]}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
@@ -80,7 +83,7 @@ export function Screen({
   );
 
   return (
-    <SafeAreaView style={styles.flex} edges={edges}>
+    <SafeAreaView style={[styles.flex, styles.background]} edges={edges}>
       {body}
     </SafeAreaView>
   );
@@ -88,6 +91,8 @@ export function Screen({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  background: { backgroundColor: theme.colors.background.primary },
+  screen: { flex: 1, paddingBottom: EXTRA_BOTTOM_SPACING },
   padded: { paddingHorizontal: theme.spacing.base },
-  scrollContent: { flexGrow: 1, paddingBottom: theme.spacing.xxl },
+  scrollContent: { flexGrow: 1, paddingBottom: EXTRA_BOTTOM_SPACING },
 });

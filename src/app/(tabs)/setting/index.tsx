@@ -26,7 +26,7 @@ export default function SettingsScreen() {
 
   return (
     <Screen padded={false} edges={['top', 'bottom']}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title}>Settings</Text>
           <TouchableOpacity style={styles.iconButton} activeOpacity={0.85} onPress={() => router.push('/(tabs)/setting/profile')}>

@@ -1,7 +1,8 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View,Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Alert, ChevronLeft, EllipsisVertical, Flame, Pencil, Trash2, TimerReset } from 'lucide-react-native';
+
+import {  ChevronLeft, EllipsisVertical, Flame, Pencil, Trash2, TimerReset } from 'lucide-react-native';
 import { Screen } from '@/components/layout/Screen';
 import {
   HabitBadge,
@@ -44,7 +45,7 @@ export default function HabitDetailScreen() {
 
   return (
     <Screen padded={false} edges={['top', 'bottom']}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.85}>
             <ChevronLeft size={24} color={theme.colors.text.primary} />
@@ -118,7 +119,9 @@ export default function HabitDetailScreen() {
             <TouchableOpacity
               style={styles.secondaryButton}
               activeOpacity={0.85}
-              onPress={() => router.push({ pathname: '/edit-habit/[id]', params: { id: habit.id } })}
+              onPress={() =>
+                router.push({ pathname: '../../edit-habit/[id]', params: { id: habit.id } })
+              }
             >
               <Pencil size={16} color={theme.colors.accent.DEFAULT} />
               <Text style={styles.secondaryButtonText}>Edit Habit</Text>

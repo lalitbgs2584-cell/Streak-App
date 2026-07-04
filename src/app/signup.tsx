@@ -11,7 +11,7 @@ export default function SignupScreen() {
 
   return (
     <Screen keyboardAvoiding padded={false} edges={['top', 'bottom']}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title}>Profile Setup</Text>
           <Text style={styles.subtitle}>This replaces the old login flow for now.</Text>

@@ -1,6 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { HabitFrequency, HabitRecord, HabitView, frequencyToLabel } from '@/lib/habits/types';
+import { Href } from 'expo-router';
 
 const REMINDER_CHANNEL_ID = 'habit-reminders';
 
@@ -16,7 +17,7 @@ export function buildHabitNotificationContent(habit: HabitRecord | HabitView) {
     title: `${habit.emoji ?? '💡'} ${habit.title}`,
     body: `Time for ${frequencyToLabel(habit.frequency)}. Tap to open the habit.`,
     data: getHabitNotificationRoute(habit.id),
-    sound: 'default' as const,
+    sound: 'notification.wav',
   };
 }
 
@@ -75,23 +76,36 @@ export function isNotificationTapData(value: unknown): value is { screen?: strin
   return typeof value === 'object' && value !== null;
 }
 
-export function normalizeTapTarget(data: unknown) {
+
+
+const NOTIFICATION_SCREENS = {
+  today: '../../../(tabs)/today/[id]',
+  habit: '../../../(tabs)/habit/[id]',
+} as const satisfies Record<string, Href>;
+
+type NotificationScreenKey = keyof typeof NOTIFICATION_SCREENS;
+
+function isNotificationScreenKey(value: string): value is NotificationScreenKey {
+  return value in NOTIFICATION_SCREENS;
+}
+
+export function normalizeTapTarget(data: unknown): Href | null {
   if (!isNotificationTapData(data)) {
     return null;
   }
 
-  if (typeof data.screen === 'string' && data.habitId) {
+  if (typeof data.screen === 'string' && data.habitId && isNotificationScreenKey(data.screen)) {
     return {
-      pathname: data.screen,
+      pathname: NOTIFICATION_SCREENS[data.screen],
       params: { id: data.habitId },
-    } as const;
+    } as Href;
   }
 
   if (typeof data.habitId === 'string') {
     return {
       pathname: '/(tabs)/today/[id]',
       params: { id: data.habitId },
-    } as const;
+    } as Href;
   }
 
   return null;
@@ -107,7 +121,7 @@ export async function setupNotificationChannel() {
     importance: Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 250, 250, 250],
     lightColor: '#C6FF4F',
-    sound: 'default',
+    sound: 'notification.wav',
   });
 }
 
