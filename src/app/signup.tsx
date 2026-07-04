@@ -1,203 +1,143 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Mail, Shield, User } from 'lucide-react-native';
+import { Mail, User, Globe, Shield } from 'lucide-react-native';
 import { Screen } from '@/components/layout/Screen';
+import { SETTINGS_PROFILE } from '@/lib/mock/habit-ui';
 import { theme } from '@/lib/theme';
 
-export default function SignUpScreen() {
+export default function SignupScreen() {
   const router = useRouter();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
-  const handleSignUp = () => {
-    // Navigate directly to the dashboard
-    router.replace('/(tabs)/today');
-  };
 
   return (
     <Screen keyboardAvoiding padded={false} edges={['top', 'bottom']}>
-      <View style={styles.container}>
-        {/* Header */}
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Let&apos;s get you started</Text>
+          <Text style={styles.title}>Profile Setup</Text>
+          <Text style={styles.subtitle}>This replaces the old login flow for now.</Text>
         </View>
 
-        {/* Inputs Form */}
-        <View style={styles.form}>
-          {/* Name */}
-          <View style={styles.inputContainer}>
-            <User size={20} color={theme.colors.text.tertiary} style={styles.inputIcon} />
+        <View style={styles.card}>
+          <View style={styles.field}>
+            <User size={18} color={theme.colors.text.tertiary} />
             <TextInput
-              style={styles.textInput}
+              defaultValue={SETTINGS_PROFILE.name}
               placeholder="Name"
               placeholderTextColor={theme.colors.text.tertiary}
-              value={name}
-              onChangeText={setName}
+              style={styles.input}
             />
           </View>
-
-          {/* Email */}
-          <View style={styles.inputContainer}>
-            <Mail size={20} color={theme.colors.text.tertiary} style={styles.inputIcon} />
+          <View style={styles.field}>
+            <Mail size={18} color={theme.colors.text.tertiary} />
             <TextInput
-              style={styles.textInput}
+              defaultValue={SETTINGS_PROFILE.email}
               placeholder="Email"
               placeholderTextColor={theme.colors.text.tertiary}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={setEmail}
+              style={styles.input}
             />
           </View>
-
-          {/* Password */}
-          <View style={styles.inputContainer}>
-            <Shield size={20} color={theme.colors.text.tertiary} style={styles.inputIcon} />
+          <View style={styles.field}>
+            <Globe size={18} color={theme.colors.text.tertiary} />
             <TextInput
-              style={styles.textInput}
+              defaultValue={SETTINGS_PROFILE.timeZone}
+              placeholder="Time zone"
+              placeholderTextColor={theme.colors.text.tertiary}
+              style={styles.input}
+            />
+          </View>
+          <View style={styles.field}>
+            <Shield size={18} color={theme.colors.text.tertiary} />
+            <TextInput
               placeholder="Password"
               placeholderTextColor={theme.colors.text.tertiary}
               secureTextEntry
-              value={password}
-              onChangeText={setPassword}
+              style={styles.input}
             />
           </View>
-
-          {/* Sign Up Button */}
-          <TouchableOpacity
-            style={styles.signUpButton}
-            onPress={handleSignUp}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.signUpButtonText}>Sign Up</Text>
-          </TouchableOpacity>
         </View>
 
-        {/* Social Authentication */}
-        <View style={styles.footer}>
-          <Text style={styles.socialText}>Or continue with</Text>
-          <View style={styles.socialRow}>
-            {['Google', 'Apple', 'Email'].map((provider) => (
-              <TouchableOpacity
-                key={provider}
-                style={styles.socialIconBox}
-                onPress={handleSignUp}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.socialIconText}>{provider[0]}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Login Link */}
-          <TouchableOpacity onPress={handleSignUp} activeOpacity={0.7} style={styles.loginLink}>
-            <Text style={styles.loginText}>
-              Already have an account? <Text style={styles.loginLinkText}>Log in</Text>
-            </Text>
-          </TouchableOpacity>
+        <View style={styles.noteCard}>
+          <Text style={styles.noteTitle}>No authentication wiring</Text>
+          <Text style={styles.noteText}>
+            These inputs are purely visual and can later be connected to the real user profile record.
+          </Text>
         </View>
-      </View>
+
+        <TouchableOpacity style={styles.primaryButton} activeOpacity={0.85} onPress={() => router.replace('/(tabs)/today')}>
+          <Text style={styles.primaryButtonText}>Continue</Text>
+        </TouchableOpacity>
+      </ScrollView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 24,
-    justifyContent: 'space-between',
-    paddingVertical: theme.spacing.xxxl,
+  content: {
+    paddingHorizontal: theme.spacing.base,
+    paddingBottom: theme.spacing.xxl,
+    gap: theme.spacing.base,
   },
   header: {
-    marginTop: theme.spacing.xl,
+    gap: 6,
+    paddingTop: theme.spacing.sm,
   },
   title: {
-    fontSize: 32,
-    fontWeight: '800',
+    ...theme.typography.title,
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
   },
   subtitle: {
-    fontSize: 16,
+    ...theme.typography.body,
     color: theme.colors.text.secondary,
-    fontWeight: '500',
   },
-  form: {
-    gap: theme.spacing.md,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.surface.input,
+  card: {
+    backgroundColor: theme.colors.surface.card,
+    borderRadius: theme.radius.lg,
     borderWidth: 1,
     borderColor: theme.colors.surface.border,
+    padding: theme.spacing.base,
+    gap: theme.spacing.sm,
+  },
+  field: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    minHeight: 52,
     borderRadius: theme.radius.md,
-    height: 54,
+    borderWidth: 1,
+    borderColor: theme.colors.surface.border,
+    backgroundColor: theme.colors.surface.input,
     paddingHorizontal: theme.spacing.md,
   },
-  inputIcon: {
-    marginRight: theme.spacing.sm,
-  },
-  textInput: {
+  input: {
     flex: 1,
     color: theme.colors.text.primary,
-    fontSize: 16,
-    fontWeight: '600',
+    ...theme.typography.bodyMedium,
   },
-  signUpButton: {
-    backgroundColor: theme.colors.accent.DEFAULT,
-    height: 52,
-    borderRadius: theme.radius.md,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: theme.spacing.sm,
-  },
-  signUpButtonText: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: theme.colors.accent.text,
-  },
-  footer: {
-    alignItems: 'center',
-    gap: theme.spacing.md,
-  },
-  socialText: {
-    color: theme.colors.text.tertiary,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  socialRow: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  socialIconBox: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+  noteCard: {
     backgroundColor: theme.colors.surface.card,
+    borderRadius: theme.radius.lg,
     borderWidth: 1,
     borderColor: theme.colors.surface.border,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: theme.spacing.base,
+    gap: 6,
   },
-  socialIconText: {
+  noteTitle: {
+    ...theme.typography.heading,
     color: theme.colors.text.primary,
-    fontSize: 18,
-    fontWeight: '800',
   },
-  loginLink: {
-    marginTop: theme.spacing.sm,
-  },
-  loginText: {
+  noteText: {
+    ...theme.typography.body,
     color: theme.colors.text.secondary,
-    fontSize: 14,
-    fontWeight: '500',
   },
-  loginLinkText: {
-    color: theme.colors.accent.DEFAULT,
-    fontWeight: '700',
+  primaryButton: {
+    height: 52,
+    borderRadius: theme.radius.md,
+    backgroundColor: theme.colors.accent.DEFAULT,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryButtonText: {
+    ...theme.typography.bodyMedium,
+    color: theme.colors.accent.text,
   },
 });

@@ -1,56 +1,139 @@
-# Welcome to your Expo app 👋
+# Streak Habit Tracker
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A mobile habit tracker built with Expo Router that demonstrates local notification scheduling, push notifications, permission handling, Android notification channels, and deep linking from both notification types into the correct habit screen.
 
-## Get started
+## Demo & Submission
 
-1. Install dependencies
 
-   ```bash
-   npm install
-   ```
+- **Demo Video:** TBD
+- **Development Build:** (https://expo.dev/accounts/dev_lalit_kumar/projects/13_assignment-streak/builds/17b00699-e234-4cf9-b6cd-4977112db0a1)
 
-2. Start the app
+## Features
 
-   ```bash
-   npx expo start
-   ```
+### Habit Management
+- Create, edit, and delete habits (name, emoji, frequency, reminder time)
+- Daily and weekly (selected weekdays) reminder frequencies
+- Mark a habit as done for the day
+- Streak count increases on consecutive completions, resets on a missed day
+- Habits, reminders, and notification IDs persist across app restarts (Expo SQLite)
 
-In the output, you'll find options to open the app in a
+### Local Notifications
+- Reminders scheduled when a habit is created
+- Editing a habit cancels its old notification IDs and schedules new ones
+- Deleting a habit cancels only that habit's notifications — not all scheduled notifications
+- Foreground handler ensures reminders are visible even while the app is open
+- Custom high-importance Android notification channel for reminders
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### Push Notifications
+- Device registers for an Expo Push Token on launch
+- Token is displayed in Settings and can be copied
+- A lightweight Node/Express server (using `expo-server-sdk`) sends pushes on request
+- Same tap handler is reused for both local and push notification taps
+- Push receipts are polled ~15s after sending; tokens reporting `DeviceNotRegistered` are pruned from the server's store
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### Deep Linking
+- Notification payload carries `{ screen: '/habit', habitId }`
+- Tapping a local or push notification opens the matching habit detail screen
+- Missing or invalid habit data is handled gracefully (no crash, falls back to home)
 
-## Get a fresh project
+### Permissions
+- Permission requested only after the Android channel is created
+- Denied state is shown clearly, with a button to open system settings
+- App never crashes regardless of permission status
 
-When you're ready, run:
+## Tech Stack
 
-```bash
-npm run reset-project
+| Layer | Technology |
+|---|---|
+| App framework | Expo SDK 55, Expo Router |
+| UI | React Native, TypeScript |
+| Local storage | Expo SQLite |
+| Notifications | expo-notifications |
+| Push backend | Node.js, Express, expo-server-sdk |
+
+## Project Structure
+
+```
+src/
+  app/
+    index.tsx          # Today's habits, done buttons, streak display
+    habit/[id].tsx      # Habit detail — deep-link target for notifications
+    new.tsx             # Create/edit habit form
+    settings.tsx        # Permission status, push token, copy button
+
+  lib/
+    habits/
+      storage.ts        # Habit CRUD (Create, Read, Update, Delete)
+      types.ts           # Habit & Frequency types
+    notifications/
+      setup.ts           # Notification handler, Android channel, permissions
+      schedule.ts         # Schedule/cancel/reschedule habit reminders
+      push.ts             # Push token registration
+
+  hooks/
+    use-habits.ts
+    use-push-notifications.ts
+
+server/
+  index.ts              # Express server: /register, /unregister, /send
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Getting Started
 
-### Other setup steps
+### 1. Install dependencies
+```bash
+npm install
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+### 2. Run the push server (separate terminal)
+```bash
+cd server
+npm install
+npm run dev
+```
+Server runs on `http://localhost:4000`. Note your machine's local network IP (e.g. `192.168.x.x`) — the app needs this to reach the server from a physical device.
 
-## Learn more
+### 3. Create a development build
+Push notifications **do not work in Expo Go**, so a dev build is required:
+```bash
+eas build --profile development --platform android
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+### 4. Start the app
+```bash
+npx expo start --dev-client
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### 5. Test push notifications
+```bash
+curl -X POST http://<your-ip>:4000/send \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Time to drink water 💧",
+    "body": "Tap to log it.",
+    "data": { "screen": "/habit", "habitId": "<a-real-habit-id>" }
+  }'
+```
+Test both with the app **open (foreground)** and **backgrounded/killed** to observe the different notification behaviors.
 
-## Join the community
+## Conceptual Writeup
 
-Join our community of developers creating universal apps.
+### Local vs Push Notifications
+Local notifications are scheduled entirely on-device via `expo-notifications` — no server or network round-trip is needed, and they fire based on a device-local trigger (time, interval, calendar). Push notifications originate from a remote server, are routed through Apple Push Notification Service (APNs) or Firebase Cloud Messaging (FCM), and reach the device via Expo's push service. Local notifications are used here for scheduled habit reminders since they don't depend on connectivity; push notifications are used for server-driven nudges (e.g. streak reminders, announcements) that need to be triggered externally.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### Push Ticket vs Receipt
+When the server calls `sendPushNotificationsAsync`, Expo immediately returns a **ticket** per message — this only confirms Expo *accepted* the request for delivery, not that it reached the device. Some time later, the server polls `getPushNotificationReceiptsAsync` using the ticket IDs to get a **receipt**, which reflects the actual outcome from APNs/FCM (delivered, or an error like `DeviceNotRegistered`). Tickets are immediate and optimistic; receipts are delayed and authoritative.
+
+### DeviceNotRegistered
+This receipt error means the push token is no longer valid — typically because the app was uninstalled, the token was regenerated, or the OS revoked it. The server should remove such tokens from its store immediately; continuing to send to them wastes requests and can eventually get the sending app rate-limited or flagged by Expo/FCM/APNs.
+
+### Expo Go Limitation
+Expo Go is a shared sandbox app used for quick local-notification testing, but it cannot register unique push credentials per app (no custom FCM/APNs setup), so push notifications silently fail to arrive. A development build (`eas build --profile development`) compiles the app with its own native push configuration, which is required for push notifications to work at all.
+
+### Android Notification Channel Behavior
+On Android 8+ (API 26+), every notification must belong to a channel, and a channel's importance/sound/vibration settings are locked in at creation time — they can't be changed later once a user has seen them. If the permission request happens before the channel exists, the very first scheduled notification can get silently assigned to a generic/default channel instead of the intended high-importance one, and no amount of re-creating the channel afterward fixes it for that user. Creating the channel before requesting permission guarantees reminders are correctly categorized as high-priority from the very first notification.
+
+## Notes
+- All notification side effects (scheduling, cancelling, channel setup) live in `lib/notifications/`, not in UI components.
+- Habit storage logic is fully separated from notification logic.
+- The app degrades gracefully when permission is denied — no crashes, with a clear path to system settings.

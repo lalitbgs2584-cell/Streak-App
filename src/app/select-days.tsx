@@ -1,100 +1,43 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-native';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Check } from 'lucide-react-native';
 import { Screen } from '@/components/layout/Screen';
+import { WEEKDAY_LONG } from '@/lib/mock/habit-ui';
 import { theme } from '@/lib/theme';
-import { getHabitDraft, setHabitDraft } from '@/lib/store/habit-draft';
-
-const DAYS_OF_WEEK = [
-  { label: 'Sunday', value: 0 },
-  { label: 'Monday', value: 1 },
-  { label: 'Tuesday', value: 2 },
-  { label: 'Wednesday', value: 3 },
-  { label: 'Thursday', value: 4 },
-  { label: 'Friday', value: 5 },
-  { label: 'Saturday', value: 6 },
-];
 
 export default function SelectDaysScreen() {
   const router = useRouter();
-  const draft = getHabitDraft();
-  
-  // Local state for toggled days initialized from draft store
-  const [selectedDays, setSelectedDays] = useState<number[]>(draft.repeatDays);
-
-  const handleToggleDay = (dayValue: number) => {
-    setSelectedDays((prev) =>
-      prev.includes(dayValue)
-        ? prev.filter((d) => d !== dayValue)
-        : [...prev, dayValue].sort((a, b) => a - b)
-    );
-  };
-
-  const handleDone = () => {
-    // Save to the draft store
-    setHabitDraft({
-      repeatDays: selectedDays,
-    });
-    router.back();
-  };
+  const selected = [1, 2, 3, 4, 5];
 
   return (
     <Screen padded={false} edges={['top', 'bottom']}>
-      {/* Header Bar */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-          activeOpacity={0.7}
-        >
-          <ChevronLeft size={28} color={theme.colors.text.primary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Select Days</Text>
-        <TouchableOpacity
-          onPress={handleDone}
-          style={styles.doneButton}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.doneText}>Done</Text>
-        </TouchableOpacity>
-      </View>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.iconButton} onPress={() => router.back()} activeOpacity={0.85}>
+            <ChevronLeft size={22} color={theme.colors.text.primary} />
+          </TouchableOpacity>
+          <Text style={styles.title}>Select Days</Text>
+          <TouchableOpacity style={styles.doneButton} activeOpacity={0.85} onPress={() => router.back()}>
+            <Text style={styles.doneText}>Done</Text>
+          </TouchableOpacity>
+        </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.subtitle}>Choose days you want to be reminded</Text>
-
-        <View style={styles.listContainer}>
-          {DAYS_OF_WEEK.map((day) => {
-            const isSelected = selectedDays.includes(day.value);
-            return (
-              <TouchableOpacity
-                key={day.value}
-                style={[
-                  styles.dayRow,
-                  isSelected && styles.dayRowActive
-                ]}
-                onPress={() => handleToggleDay(day.value)}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.dayLabel, isSelected && styles.dayLabelActive]}>
-                  {day.label}
-                </Text>
-                
-                <View
-                  style={[
-                    styles.checkboxCircle,
-                    isSelected
-                      ? { backgroundColor: theme.colors.accent.DEFAULT, borderColor: theme.colors.accent.DEFAULT }
-                      : { borderColor: theme.colors.surface.border }
-                  ]}
-                >
-                  {isSelected && (
-                    <Check size={14} color={theme.colors.accent.text} strokeWidth={4} />
-                  )}
+        <View style={styles.card}>
+          <Text style={styles.subtitle}>Choose the weekdays you want the reminder to repeat on.</Text>
+          <View style={styles.list}>
+            {WEEKDAY_LONG.map((day, index) => {
+              const active = selected.includes(index);
+              return (
+                <View key={day} style={styles.dayRow}>
+                  <Text style={[styles.dayText, active && styles.dayTextActive]}>{day}</Text>
+                  <View style={[styles.check, active && styles.checkActive]}>
+                    {active ? <Check size={14} color={theme.colors.accent.text} strokeWidth={3} /> : null}
+                  </View>
                 </View>
-              </TouchableOpacity>
-            );
-          })}
+              );
+            })}
+          </View>
         </View>
       </ScrollView>
     </Screen>
@@ -102,80 +45,83 @@ export default function SelectDaysScreen() {
 }
 
 const styles = StyleSheet.create({
+  content: {
+    paddingHorizontal: theme.spacing.base,
+    paddingBottom: theme.spacing.xxl,
+    gap: theme.spacing.base,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: theme.spacing.md,
-    marginTop: theme.spacing.sm,
+    paddingTop: theme.spacing.sm,
   },
-  backButton: {
-    padding: theme.spacing.xs,
-    marginLeft: -theme.spacing.xs,
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: theme.colors.surface.card,
+    borderWidth: 1,
+    borderColor: theme.colors.surface.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '800',
+  title: {
+    ...theme.typography.heading,
     color: theme.colors.text.primary,
-    textAlign: 'center',
   },
   doneButton: {
-    padding: theme.spacing.xs,
+    height: 40,
+    justifyContent: 'center',
   },
   doneText: {
+    ...theme.typography.bodyMedium,
     color: theme.colors.accent.DEFAULT,
-    fontSize: 16,
-    fontWeight: '700',
   },
-  content: {
-    paddingHorizontal: 20,
-    paddingTop: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
-  },
-  subtitle: {
-    fontSize: 18,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
-    marginBottom: theme.spacing.xxl,
-    paddingHorizontal: theme.spacing.xl,
-    lineHeight: 24,
-    fontWeight: '500',
-  },
-  listContainer: {
+  card: {
     backgroundColor: theme.colors.surface.card,
     borderRadius: theme.radius.lg,
     borderWidth: 1,
     borderColor: theme.colors.surface.border,
-    overflow: 'hidden',
+    padding: theme.spacing.base,
+    gap: theme.spacing.base,
+  },
+  subtitle: {
+    ...theme.typography.body,
+    color: theme.colors.text.secondary,
+  },
+  list: {
+    gap: 10,
   },
   dayRow: {
+    minHeight: 52,
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.surface.border,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    paddingHorizontal: theme.spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: theme.spacing.lg,
-    paddingHorizontal: theme.spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.surface.border,
   },
-  dayRowActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.01)',
-  },
-  dayLabel: {
-    fontSize: 16,
-    fontWeight: '600',
+  dayText: {
+    ...theme.typography.bodyMedium,
     color: theme.colors.text.secondary,
   },
-  dayLabelActive: {
+  dayTextActive: {
     color: theme.colors.text.primary,
-    fontWeight: '700',
   },
-  checkboxCircle: {
+  check: {
     width: 24,
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    justifyContent: 'center',
+    borderColor: theme.colors.surface.border,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkActive: {
+    backgroundColor: theme.colors.accent.DEFAULT,
+    borderColor: theme.colors.accent.DEFAULT,
   },
 });

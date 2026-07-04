@@ -26,7 +26,7 @@ const TodayHeader = () => {
           <Text style={styles.headerSubtitle}>{formattedDate}</Text>
         </View>
         <View style={styles.addHabitButton}>
-          <PrimaryButton onPress={() => router.push('/new-habit')} children="Add Habit" />
+          <PrimaryButton onPress={() => router.push('/new-habit')}>Add Habit</PrimaryButton>
         </View>
       </View>
       <DateStrip selectedDate={selectedDate} onDateChange={setSelectedDate} />

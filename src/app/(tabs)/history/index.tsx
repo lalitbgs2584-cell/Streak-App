@@ -1,77 +1,95 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { CalendarDays, ChevronRight, Flame } from 'lucide-react-native';
 import { Screen } from '@/components/layout/Screen';
+import { ScreenTitle, WEEKDAY_SHORT } from '@/lib/mock/habit-ui';
 import { theme } from '@/lib/theme';
+import { useHabits } from '@/lib/hooks/use-habits';
+import { getHabitLogs, getHistorySummary } from '@/lib/habits/storage';
 
 export default function HistoryScreen() {
-  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const { habits } = useHabits();
+  const [completedDates, setCompletedDates] = React.useState<string[]>([]);
+  const [summary, setSummary] = React.useState({ bestStreak: 0, completionRate: 0, totalCompleted: 0 });
 
-  // Completed calendar date markers for visual display
-  const completedDates = [1, 2, 3, 4, 11, 12, 13, 14, 15, 16, 18, 19, 21, 25, 26];
+  React.useEffect(() => {
+    let active = true;
 
-  // Calendar dates layout grid for May 2025
-  // May 1st 2025 is a Thursday (so starts at col index 4)
-  const CALENDAR_DAYS = [
-    // blank spaces for offset
-    null, null, null, null,
-    1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-    11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-    21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31
+    const load = async () => {
+      const logs = await Promise.all(habits.map((habit) => getHabitLogs(habit.id)));
+      const dates = logs.flat().filter((log) => log.status === 1).map((log) => log.completedDate);
+      const nextSummary = await getHistorySummary();
+
+      if (active) {
+        setCompletedDates(Array.from(new Set(dates)));
+        setSummary(nextSummary);
+      }
+    };
+
+    void load();
+
+    return () => {
+      active = false;
+    };
+  }, [habits]);
+
+  const now = new Date();
+  const monthTitle = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const firstDayOfMonth = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const grid = [
+    ...Array.from({ length: firstDayOfMonth }).map(() => null),
+    ...Array.from({ length: daysInMonth }, (_, index) => index + 1),
   ];
 
-  const weekLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  const monthKey = now.toISOString().slice(0, 7);
 
   return (
-    <Screen padded={false} edges={['bottom']}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + theme.spacing.md }]}>
-        <Text style={styles.headerTitle}>History</Text>
-      </View>
+    <Screen padded={false} edges={['top', 'bottom']}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <ScreenTitle
+          title="History"
+          subtitle="A simple calendar-style summary of completed days."
+          right={
+            <TouchableOpacity style={styles.iconButton} activeOpacity={0.85} onPress={() => router.push('/streak-detail')}>
+              <ChevronRight size={18} color={theme.colors.text.primary} />
+            </TouchableOpacity>
+          }
+        />
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Month Header */}
-        <View style={styles.calendarHeader}>
-          <Text style={styles.monthLabel}>May 2025</Text>
-        </View>
+        <View style={styles.calendarCard}>
+          <View style={styles.calendarHeader}>
+            <Text style={styles.monthTitle}>{monthTitle}</Text>
+            <View style={styles.monthBadge}>
+              <CalendarDays size={16} color={theme.colors.accent.DEFAULT} />
+              <Text style={styles.monthBadgeText}>Completion heatmap</Text>
+            </View>
+          </View>
 
-        {/* Calendar Box */}
-        <View style={styles.calendarBox}>
-          {/* Weekdays Row */}
-          <View style={styles.weekLabelsRow}>
-            {weekLabels.map((lbl, idx) => (
-              <Text key={idx} style={styles.weekLabelText}>{lbl}</Text>
+          <View style={styles.weekRow}>
+            {WEEKDAY_SHORT.map((label) => (
+              <Text key={label} style={styles.weekLabel}>
+                {label}
+              </Text>
             ))}
           </View>
 
-          {/* Dates Grid */}
-          <View style={styles.datesGrid}>
-            {CALENDAR_DAYS.map((day, idx) => {
+          <View style={styles.grid}>
+            {grid.map((day, index) => {
               if (day === null) {
-                return <View key={`empty-${idx}`} style={styles.dateCell} />;
+                return <View key={`empty-${index}`} style={styles.cell} />;
               }
 
-              const isCompleted = completedDates.includes(day);
-
+              const isoDate = `${monthKey}-${String(day).padStart(2, '0')}`;
+              const completed = completedDates.includes(isoDate);
               return (
-                <View key={`day-${day}`} style={styles.dateCell}>
-                  <View
-                    style={[
-                      styles.dateCircle,
-                      isCompleted && {
-                        backgroundColor: theme.colors.accent.DEFAULT,
-                        borderColor: theme.colors.accent.DEFAULT
-                      }
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.dateText,
-                        isCompleted && { color: theme.colors.accent.text, fontWeight: '800' }
-                      ]}
-                    >
-                      {day}
-                    </Text>
+                <View key={day} style={styles.cell}>
+                  <View style={[styles.dayBubble, completed && styles.dayBubbleActive]}>
+                    <Text style={[styles.dayText, completed && styles.dayTextActive]}>{day}</Text>
                   </View>
                 </View>
               );
@@ -79,18 +97,21 @@ export default function HistoryScreen() {
           </View>
         </View>
 
-        {/* Summary Card */}
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryCardTitle}>Summary</Text>
+          <Text style={styles.sectionLabel}>Summary</Text>
           <View style={styles.summaryRow}>
-            <View style={styles.summaryCol}>
-              <Text style={styles.summaryValue}>18 days</Text>
-              <Text style={styles.summaryLabel}>Longest Streak</Text>
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryValue}>{summary.bestStreak} days</Text>
+              <Text style={styles.summaryLabel}>Longest streak</Text>
             </View>
-            <View style={styles.summaryCol}>
-              <Text style={styles.summaryValue}>78%</Text>
-              <Text style={styles.summaryLabel}>Completion Rate</Text>
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryValue}>{summary.completionRate}%</Text>
+              <Text style={styles.summaryLabel}>Completion rate</Text>
             </View>
+          </View>
+          <View style={styles.summaryHint}>
+            <Flame size={16} color={theme.colors.accent.DEFAULT} />
+            <Text style={styles.summaryHintText}>{summary.totalCompleted} logged completions across all habits.</Text>
           </View>
         </View>
       </ScrollView>
@@ -99,74 +120,93 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    paddingHorizontal: 20,
-    paddingBottom: theme.spacing.md,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: theme.colors.text.primary,
-  },
   content: {
-    paddingHorizontal: 20,
-    paddingTop: theme.spacing.sm,
-    paddingBottom: theme.spacing.xxxl,
+    paddingHorizontal: theme.spacing.base,
+    paddingBottom: theme.spacing.xxl,
+    gap: theme.spacing.base,
   },
-  calendarHeader: {
+  iconButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: theme.colors.surface.card,
+    borderWidth: 1,
+    borderColor: theme.colors.surface.border,
     alignItems: 'center',
-    marginBottom: theme.spacing.md,
+    justifyContent: 'center',
   },
-  monthLabel: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: theme.colors.text.primary,
-  },
-  calendarBox: {
+  calendarCard: {
     backgroundColor: theme.colors.surface.card,
     borderRadius: theme.radius.lg,
     borderWidth: 1,
     borderColor: theme.colors.surface.border,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.sm,
-    marginBottom: theme.spacing.lg,
+    padding: theme.spacing.base,
+    gap: theme.spacing.md,
   },
-  weekLabelsRow: {
+  calendarHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.spacing.sm,
+  },
+  monthTitle: {
+    ...theme.typography.heading,
+    color: theme.colors.text.primary,
+  },
+  monthBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: theme.colors.surface.cardElevated,
+    borderWidth: 1,
+    borderColor: theme.colors.surface.border,
+  },
+  monthBadgeText: {
+    ...theme.typography.label,
+    color: theme.colors.text.secondary,
+  },
+  weekRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: theme.spacing.sm,
   },
-  weekLabelText: {
-    flex: 1,
+  weekLabel: {
+    width: '14.2%',
     textAlign: 'center',
+    ...theme.typography.label,
     color: theme.colors.text.tertiary,
-    fontSize: 12,
-    fontWeight: '700',
   },
-  datesGrid: {
+  grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'flex-start',
   },
-  dateCell: {
-    width: '14.28%', // 7 days in a row
-    height: 44,
-    justifyContent: 'center',
+  cell: {
+    width: '14.28%',
+    height: 42,
     alignItems: 'center',
-  },
-  dateCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
     justifyContent: 'center',
-    alignItems: 'center',
   },
-  dateText: {
-    fontSize: 14,
-    fontWeight: '600',
+  dayBubble: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: theme.colors.surface.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayBubbleActive: {
+    backgroundColor: theme.colors.accent.DEFAULT,
+    borderColor: theme.colors.accent.DEFAULT,
+  },
+  dayText: {
+    ...theme.typography.label,
     color: theme.colors.text.primary,
+  },
+  dayTextActive: {
+    color: theme.colors.accent.text,
   },
   summaryCard: {
     backgroundColor: theme.colors.surface.card,
@@ -174,29 +214,41 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.surface.border,
     padding: theme.spacing.base,
+    gap: theme.spacing.base,
   },
-  summaryCardTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
+  sectionLabel: {
+    ...theme.typography.overline,
+    color: theme.colors.text.tertiary,
   },
   summaryRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: theme.spacing.sm,
   },
-  summaryCol: {
+  summaryItem: {
     flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.surface.border,
+    padding: theme.spacing.base,
+    gap: 4,
   },
   summaryValue: {
-    fontSize: 22,
-    fontWeight: '800',
+    ...theme.typography.heading,
     color: theme.colors.text.primary,
-    marginBottom: 4,
   },
   summaryLabel: {
-    fontSize: 12,
-    fontWeight: '600',
+    ...theme.typography.caption,
     color: theme.colors.text.secondary,
+  },
+  summaryHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  summaryHintText: {
+    ...theme.typography.caption,
+    color: theme.colors.text.secondary,
+    flex: 1,
   },
 });

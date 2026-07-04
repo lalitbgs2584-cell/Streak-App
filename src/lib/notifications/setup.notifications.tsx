@@ -1,28 +1,26 @@
 import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
+import * as Device from 'expo-device';
+import Constants from 'expo-constants';
+import { setupNotificationChannel } from './habit-notifications';
 
-export async function setupNotificationChannel() {
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('habit-reminders', {
-      name: 'Habit Reminders',
-      importance: Notifications.AndroidImportance.HIGH, // pop-up + sound
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#4ade80',
-    });
-  }
-}
-
-// Foreground handler — controls what happens if a notif fires while app is OPEN
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldPlaySound: true,
-    shouldSetBadge: false,
+    shouldSetBadge: true,
     shouldShowBanner: true,
     shouldShowList: true,
   }),
 });
 
-export async function requestPermissions() {
+export { setupNotificationChannel };
+
+export async function registerForPushNotificationsAsync() {
+  await setupNotificationChannel();
+
+  if (!Device.isDevice) {
+    throw new Error('Must use a physical device');
+  }
+
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   let finalStatus = existingStatus;
 
@@ -31,5 +29,17 @@ export async function requestPermissions() {
     finalStatus = status;
   }
 
-  return finalStatus; // 'granted' | 'denied' | 'undetermined'
+  if (finalStatus !== 'granted') {
+    throw new Error('Permission not granted');
+  }
+
+  const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+  const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
+  console.log("Token Data",tokenData.data)
+  return tokenData.data;
+}
+
+export async function getNotificationPermissionStatus() {
+  const permissions = await Notifications.getPermissionsAsync();
+  return permissions.status;
 }

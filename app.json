@@ -4,11 +4,11 @@
     "slug": "13_assignment-streak",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/expo.icon/Assets/app-icon.png",
     "scheme": "13assignmentstreak",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon/Assets/app-icon.png"
     },
     "android": {
       "adaptiveIcon": {
@@ -35,6 +35,12 @@
             "image": "./assets/images/splash-icon.png",
             "imageWidth": 76
           }
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon":"./assets/expo.icon/Assets/app-icon.png"
         }
       ],
       "expo-background-task",

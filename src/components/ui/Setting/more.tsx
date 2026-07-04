@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import React from 'react'
 
 const more = () => {
@@ -10,5 +10,3 @@ const more = () => {
 }
 
 export default more
-
-const styles = StyleSheet.create({})

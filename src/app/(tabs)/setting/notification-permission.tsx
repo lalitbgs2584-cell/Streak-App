@@ -1,139 +1,190 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { Alert, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, BellOff } from 'lucide-react-native';
+import { BellOff, ChevronLeft, ShieldAlert } from 'lucide-react-native';
 import { Screen } from '@/components/layout/Screen';
 import { theme } from '@/lib/theme';
+import * as Notifications from 'expo-notifications';
+import { useHabits } from '@/lib/hooks/use-habits';
 
 export default function NotificationPermissionScreen() {
   const router = useRouter();
+  const { profile, updateUserProfile } = useHabits();
+  const [status, setStatus] = React.useState<'loading' | 'granted' | 'denied' | 'undetermined'>('loading');
+
+  React.useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      const permissions = await Notifications.getPermissionsAsync();
+      if (mounted) {
+        setStatus(permissions.status);
+      }
+    };
+    void load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <Screen padded={false} edges={['top', 'bottom']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-          activeOpacity={0.7}
-        >
-          <ChevronLeft size={28} color={theme.colors.text.primary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Permission Denied</Text>
-        <View style={styles.headerPlaceholder} />
-      </View>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.iconButton} onPress={() => router.back()} activeOpacity={0.85}>
+            <ChevronLeft size={22} color={theme.colors.text.primary} />
+          </TouchableOpacity>
+          <Text style={styles.title}>Permission Denied</Text>
+          <View style={styles.iconButton} />
+        </View>
 
-      {/* Content */}
-      <View style={styles.content}>
-        {/* Visual Callout */}
-        <View style={styles.centerSection}>
-          <View style={styles.alertCircle}>
-            <BellOff size={54} color={theme.colors.text.secondary} />
+        <View style={styles.heroCard}>
+          <View style={styles.iconWrap}>
+            <BellOff size={52} color={theme.colors.text.secondary} />
           </View>
-          <Text style={styles.alertTitle}>Permission Denied</Text>
-          <Text style={styles.alertSubtitle}>
-            We need notification permission to remind you about your habits.
+          <Text style={styles.heroTitle}>
+            {status === 'granted' ? 'Notification permission is on' : 'Notification permission is off'}
+          </Text>
+          <Text style={styles.heroText}>
+            This UI reflects the live OS permission state and gives the user a safe route back to system settings.
           </Text>
         </View>
 
-        {/* Action Buttons */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.openSettingsButton}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.buttonText}>Open Settings</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7} style={styles.notNowLink}>
-            <Text style={styles.notNowText}>Not Now</Text>
-          </TouchableOpacity>
+        <View style={styles.card}>
+          <ShieldAlert size={18} color={theme.colors.accent.DEFAULT} />
+          <Text style={styles.cardText}>
+            Current status: {status}
+          </Text>
         </View>
-      </View>
+
+        <TouchableOpacity
+          style={styles.primaryButton}
+          activeOpacity={0.85}
+          onPress={async () => {
+            const result = await Notifications.requestPermissionsAsync();
+            setStatus(result.status);
+            await updateUserProfile({
+              notificationPermission: result.status === 'granted',
+            });
+            if (result.status !== 'granted') {
+              Alert.alert('Permission', 'Notifications are still disabled.');
+            }
+          }}
+        >
+          <Text style={styles.primaryButtonText}>Request Permission</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          activeOpacity={0.85}
+          onPress={() => {
+            Linking.openSettings().catch(() => {
+              Alert.alert('Open Settings', 'System settings could not be opened on this device.');
+            });
+          }}
+        >
+          <Text style={styles.secondaryButtonText}>Open Settings</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.secondaryButton} activeOpacity={0.85} onPress={() => router.back()}>
+          <Text style={styles.secondaryButtonText}>Not Now</Text>
+        </TouchableOpacity>
+      </ScrollView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  content: {
+    paddingHorizontal: theme.spacing.base,
+    paddingBottom: theme.spacing.xxl,
+    gap: theme.spacing.base,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: theme.spacing.md,
-    marginTop: theme.spacing.sm,
+    paddingTop: theme.spacing.sm,
   },
-  backButton: {
-    padding: theme.spacing.xs,
-    marginLeft: -theme.spacing.xs,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: theme.colors.text.primary,
-  },
-  headerPlaceholder: {
+  iconButton: {
     width: 40,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    justifyContent: 'space-between',
-    paddingBottom: theme.spacing.xxxl,
-  },
-  centerSection: {
-    alignItems: 'center',
-    marginTop: 60,
-    paddingHorizontal: 20,
-  },
-  alertCircle: {
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: theme.colors.surface.card,
+    borderWidth: 1,
     borderColor: theme.colors.surface.border,
-    marginBottom: theme.spacing.xxl,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  alertTitle: {
-    fontSize: 26,
-    fontWeight: '800',
+  title: {
+    ...theme.typography.heading,
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
+  },
+  heroCard: {
+    backgroundColor: theme.colors.surface.card,
+    borderRadius: theme.radius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.surface.border,
+    padding: theme.spacing.base,
+    alignItems: 'center',
+    gap: 8,
+  },
+  iconWrap: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 1,
+    borderColor: theme.colors.surface.border,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroTitle: {
+    ...theme.typography.heading,
+    color: theme.colors.text.primary,
     textAlign: 'center',
   },
-  alertSubtitle: {
-    fontSize: 16,
+  heroText: {
+    ...theme.typography.body,
     color: theme.colors.text.secondary,
     textAlign: 'center',
-    lineHeight: 22,
-    fontWeight: '500',
   },
-  buttonContainer: {
-    gap: theme.spacing.md,
+  card: {
+    backgroundColor: theme.colors.surface.card,
+    borderRadius: theme.radius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.surface.border,
+    padding: theme.spacing.base,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
-  openSettingsButton: {
-    backgroundColor: theme.colors.accent.DEFAULT,
+  cardText: {
+    ...theme.typography.body,
+    color: theme.colors.text.secondary,
+    flex: 1,
+  },
+  primaryButton: {
     height: 52,
     borderRadius: theme.radius.md,
-    justifyContent: 'center',
+    backgroundColor: theme.colors.accent.DEFAULT,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '800',
+  primaryButtonText: {
+    ...theme.typography.bodyMedium,
     color: theme.colors.accent.text,
   },
-  notNowLink: {
-    alignSelf: 'center',
-    paddingVertical: theme.spacing.xs,
+  secondaryButton: {
+    height: 48,
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.surface.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.surface.card,
   },
-  notNowText: {
-    color: theme.colors.text.secondary,
-    fontSize: 15,
-    fontWeight: '700',
+  secondaryButtonText: {
+    ...theme.typography.bodyMedium,
+    color: theme.colors.text.primary,
   },
 });

@@ -1,123 +1,121 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { theme } from '@/lib/theme';
-
-export type Habit = {
-  id: string;
-  title: string;
-  description: string;
-  reminder: string;
-  startTime: string;
-  endTime: string;
-  priority: 'High' | 'Medium' | 'Low';
-  streak: number;
-  count: number;
-  completed: boolean;
-  category: keyof typeof theme.colors.habit;
-};
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import {
+  HabitInput,
+  HabitRecord,
+  HabitView,
+  UserProfile,
+  createHabit,
+  deleteHabitRecord,
+  completeHabit,
+  ensureHabitStorage,
+  getProfile,
+  listHabits,
+  setHabitNotificationIds,
+  updateHabitRecord,
+  updateProfile,
+  toHabitInputFromRecord,
+} from '@/lib/habits/storage';
+import { cancelHabitNotifications, rescheduleHabitNotifications } from '@/lib/notifications/habit-notifications';
 
 type HabitContextType = {
-  habits: Habit[];
-  toggleHabit: (id: string) => void;
-  deleteHabit: (id: string) => void;
-  addHabit: (habit: Omit<Habit, 'id' | 'streak' | 'count' | 'completed'>) => void;
-  updateHabit: (habit: Habit) => void;
+  habits: HabitView[];
+  profile: UserProfile | null;
+  loading: boolean;
+  refresh: () => Promise<void>;
+  toggleHabit: (id: string) => Promise<void>;
+  deleteHabit: (id: string) => Promise<void>;
+  addHabit: (habit: HabitInput) => Promise<void>;
+  updateHabit: (habit: HabitInput & { id: string }) => Promise<void>;
+  updateUserProfile: (fields: Partial<Pick<UserProfile, 'name' | 'email' | 'timeZone' | 'language' | 'vibrationEnabled' | 'notificationPermission' | 'expoPushToken'>>) => Promise<void>;
+  getHabitById: (id: string) => HabitView | undefined;
 };
 
 const HabitContext = createContext<HabitContextType | undefined>(undefined);
 
-const INITIAL_HABITS: Habit[] = [
-  {
-    id: '1',
-    title: 'Drink Water',
-    description: 'Stay hydrated and drink enough water.',
-    reminder: 'Every day',
-    startTime: '09:00 AM',
-    endTime: '09:30 AM',
-    priority: 'High',
-    streak: 12,
-    count: 18,
-    completed: false,
-    category: 'water',
-  },
-  {
-    id: '2',
-    title: 'Morning Running',
-    description: 'Keep up the cardiovascular health.',
-    reminder: 'Mon, Wed, Fri',
-    startTime: '07:00 AM',
-    endTime: '07:45 AM',
-    priority: 'High',
-    streak: 5,
-    count: 8,
-    completed: false,
-    category: 'running',
-  },
-  {
-    id: '3',
-    title: 'Read Books',
-    description: 'Read at least 10 pages of a book.',
-    reminder: 'Every day',
-    startTime: '09:00 PM',
-    endTime: '09:30 PM',
-    priority: 'Medium',
-    streak: 24,
-    count: 30,
-    completed: true,
-    category: 'read',
-  },
-];
-
 export function HabitProvider({ children }: { children: ReactNode }) {
-  const [habits, setHabits] = useState<Habit[]>(() => {
-    // Sort initially: incomplete first, completed last
-    return [...INITIAL_HABITS].sort((a, b) => (a.completed ? 1 : 0) - (b.completed ? 1 : 0));
-  });
+  const [habits, setHabits] = useState<HabitView[]>([]);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const toggleHabit = (id: string) => {
-    setHabits((prev) => {
-      const updated = prev.map((h) => {
-        if (h.id === id) {
-          const isCompleting = !h.completed;
-          return {
-            ...h,
-            completed: isCompleting,
-            streak: isCompleting ? h.streak + 1 : Math.max(0, h.streak - 1),
-            count: isCompleting ? h.count + 1 : Math.max(0, h.count - 1),
-          };
-        }
-        return h;
-      });
-      return [...updated].sort((a, b) => (a.completed ? 1 : 0) - (b.completed ? 1 : 0));
-    });
+  const refresh = async () => {
+    setLoading(true);
+    await ensureHabitStorage();
+    const [nextHabits, nextProfile] = await Promise.all([listHabits(), getProfile()]);
+    setHabits(nextHabits);
+    setProfile(nextProfile);
+    setLoading(false);
   };
 
-  const deleteHabit = (id: string) => {
-    setHabits((prev) => prev.filter((h) => h.id !== id));
+  useEffect(() => {
+    void refresh();
+  }, []);
+
+  const syncHabits = async () => {
+    const nextHabits = await listHabits();
+    setHabits(nextHabits);
   };
 
-  const addHabit = (newHabitData: Omit<Habit, 'id' | 'streak' | 'count' | 'completed'>) => {
-    setHabits((prev) => {
-      const newHabit: Habit = {
-        ...newHabitData,
-        id: Math.random().toString(),
-        streak: 0,
-        count: 0,
-        completed: false,
-      };
-      const updated = [newHabit, ...prev];
-      return [...updated].sort((a, b) => (a.completed ? 1 : 0) - (b.completed ? 1 : 0));
-    });
+  const addHabit = async (habit: HabitInput) => {
+    const created = await createHabit(habit);
+    if (!created) {
+      return;
+    }
+
+    const nextNotificationIds = await rescheduleHabitNotifications(created, []);
+    await setHabitNotificationIds(created.id, nextNotificationIds);
+    await syncHabits();
   };
 
-  const updateHabit = (updatedHabit: Habit) => {
-    setHabits((prev) => {
-      const updated = prev.map((h) => (h.id === updatedHabit.id ? updatedHabit : h));
-      return [...updated].sort((a, b) => (a.completed ? 1 : 0) - (b.completed ? 1 : 0));
-    });
+  const updateHabit = async (habit: HabitInput & { id: string }) => {
+    const current = habits.find((item) => item.id === habit.id);
+    const updated = await updateHabitRecord(habit.id, habit);
+    if (!updated) {
+      return;
+    }
+
+    const nextNotificationIds = await rescheduleHabitNotifications(updated, current?.notificationIds ?? []);
+    await setHabitNotificationIds(updated.id, nextNotificationIds);
+    await syncHabits();
   };
+
+  const deleteHabit = async (id: string) => {
+    const current = habits.find((item) => item.id === id);
+    if (current) {
+      await cancelHabitNotifications(current.notificationIds);
+    }
+    await deleteHabitRecord(id);
+    await syncHabits();
+  };
+
+  const toggleHabit = async (id: string) => {
+    await completeHabit(id);
+    await syncHabits();
+  };
+
+  const updateUserProfile = async (
+    fields: Partial<Pick<UserProfile, 'name' | 'email' | 'timeZone' | 'language' | 'vibrationEnabled' | 'notificationPermission' | 'expoPushToken'>>
+  ) => {
+    const next = await updateProfile(fields);
+    setProfile(next);
+  };
+
+  const getHabitById = (id: string) => habits.find((habit) => habit.id === id);
 
   return (
-    <HabitContext.Provider value={{ habits, toggleHabit, deleteHabit, addHabit, updateHabit }}>
+    <HabitContext.Provider
+      value={{
+        habits,
+        profile,
+        loading,
+        refresh,
+        toggleHabit,
+        deleteHabit,
+        addHabit,
+        updateHabit,
+        updateUserProfile,
+        getHabitById,
+      }}
+    >
       {children}
     </HabitContext.Provider>
   );
@@ -125,8 +123,10 @@ export function HabitProvider({ children }: { children: ReactNode }) {
 
 export function useHabits() {
   const context = useContext(HabitContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useHabits must be used within a HabitProvider');
   }
   return context;
 }
+
+export type { HabitInput, HabitRecord, HabitView, UserProfile } from '@/lib/habits/types';

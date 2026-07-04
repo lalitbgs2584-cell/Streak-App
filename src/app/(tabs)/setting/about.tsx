@@ -1,7 +1,7 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, ChevronRight, Activity } from 'lucide-react-native';
+import { ChevronLeft, Leaf } from 'lucide-react-native';
 import { Screen } from '@/components/layout/Screen';
 import { theme } from '@/lib/theme';
 
@@ -10,137 +10,107 @@ export default function AboutScreen() {
 
   return (
     <Screen padded={false} edges={['top', 'bottom']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-          activeOpacity={0.7}
-        >
-          <ChevronLeft size={28} color={theme.colors.text.primary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>About</Text>
-        <View style={styles.headerPlaceholder} />
-      </View>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.iconButton} onPress={() => router.back()} activeOpacity={0.85}>
+            <ChevronLeft size={22} color={theme.colors.text.primary} />
+          </TouchableOpacity>
+          <Text style={styles.title}>About</Text>
+          <View style={styles.iconButton} />
+        </View>
 
-      {/* Content */}
-      <View style={styles.content}>
-        {/* Logo and titles */}
-        <View style={styles.logoSection}>
-          <View style={styles.logoBox}>
-            <Activity size={48} color={theme.colors.accent.DEFAULT} />
+        <View style={styles.hero}>
+          <View style={styles.logo}>
+            <Leaf size={42} color={theme.colors.accent.DEFAULT} />
           </View>
           <Text style={styles.appName}>HabitTracker</Text>
           <Text style={styles.appVersion}>Version 1.0.0</Text>
         </View>
 
-        {/* Action Rows */}
-        <View style={styles.rowsContainer}>
-          {["What's New", 'Privacy Policy', 'Terms of Use'].map((item) => (
-            <TouchableOpacity key={item} style={styles.rowItem} activeOpacity={0.7}>
-              <Text style={styles.rowLabel}>{item}</Text>
-              <ChevronRight size={18} color={theme.colors.text.secondary} />
-            </TouchableOpacity>
-          ))}
+        <View style={styles.card}>
+          <Text style={styles.sectionLabel}>What&apos;s new</Text>
+          <Text style={styles.body}>
+            Darker habit screens, route-ready settings pages, and a cleaner UI aligned to the database model.
+          </Text>
         </View>
 
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>© 2025 HabitTracker</Text>
-          <Text style={styles.footerText}>All rights reserved.</Text>
+        <View style={styles.card}>
+          <Text style={styles.sectionLabel}>Policy</Text>
+          <Text style={styles.body}>Privacy Policy</Text>
+          <Text style={styles.body}>Terms of Use</Text>
         </View>
-      </View>
+      </ScrollView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  content: {
+    paddingHorizontal: theme.spacing.base,
+    paddingBottom: theme.spacing.xxl,
+    gap: theme.spacing.base,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: theme.spacing.md,
-    marginTop: theme.spacing.sm,
+    paddingTop: theme.spacing.sm,
   },
-  backButton: {
-    padding: theme.spacing.xs,
-    marginLeft: -theme.spacing.xs,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: theme.colors.text.primary,
-  },
-  headerPlaceholder: {
+  iconButton: {
     width: 40,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    justifyContent: 'space-between',
-    paddingBottom: theme.spacing.xl,
-  },
-  logoSection: {
-    alignItems: 'center',
-    marginTop: 40,
-  },
-  logoBox: {
-    width: 100,
-    height: 100,
-    borderRadius: theme.radius.lg,
-    backgroundColor: 'rgba(198,255,79,0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: 'rgba(198,255,79,0.3)',
-    marginBottom: theme.spacing.lg,
-    shadowColor: theme.colors.accent.DEFAULT,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  appName: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: theme.colors.text.primary,
-    marginBottom: 4,
-  },
-  appVersion: {
-    fontSize: 14,
-    color: theme.colors.text.secondary,
-    fontWeight: '600',
-  },
-  rowsContainer: {
+    height: 40,
+    borderRadius: 20,
     backgroundColor: theme.colors.surface.card,
-    borderRadius: theme.radius.md,
     borderWidth: 1,
     borderColor: theme.colors.surface.border,
-    overflow: 'hidden',
-    marginTop: -40,
-  },
-  rowItem: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: theme.spacing.lg,
-    paddingHorizontal: theme.spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.surface.border,
+    justifyContent: 'center',
   },
-  rowLabel: {
-    fontSize: 16,
-    fontWeight: '600',
+  title: {
+    ...theme.typography.heading,
     color: theme.colors.text.primary,
   },
-  footer: {
+  hero: {
+    backgroundColor: theme.colors.surface.card,
+    borderRadius: theme.radius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.surface.border,
+    padding: theme.spacing.base,
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
-  footerText: {
+  logo: {
+    width: 96,
+    height: 96,
+    borderRadius: 28,
+    backgroundColor: theme.colors.accent.muted,
+    borderWidth: 1,
+    borderColor: theme.colors.accent.DEFAULT,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  appName: {
+    ...theme.typography.heading,
+    color: theme.colors.text.primary,
+  },
+  appVersion: {
+    ...theme.typography.body,
+    color: theme.colors.text.secondary,
+  },
+  card: {
+    backgroundColor: theme.colors.surface.card,
+    borderRadius: theme.radius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.surface.border,
+    padding: theme.spacing.base,
+    gap: 6,
+  },
+  sectionLabel: {
+    ...theme.typography.overline,
     color: theme.colors.text.tertiary,
-    fontSize: 13,
-    fontWeight: '500',
+  },
+  body: {
+    ...theme.typography.body,
+    color: theme.colors.text.secondary,
   },
 });
