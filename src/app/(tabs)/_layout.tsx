@@ -1,7 +1,7 @@
-import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '@/lib/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { Tabs } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
@@ -31,7 +31,7 @@ export default function TabLayout() {
           fontSize: 11,
           fontWeight: '600',
         },
-        sceneStyle: { backgroundColor: 'transparent' },
+        sceneContainerStyle: { backgroundColor: theme.colors.background.primary },
       }}
     >
       <Tabs.Screen

@@ -67,7 +67,7 @@ export function Screen({
       {children}
     </ScrollView>
   ) : (
-    <View style={[styles.flex, padded && styles.padded]}>{children}</View>
+    <View style={[styles.flex, styles.screen, padded && styles.padded]}>{children}</View>
   );
 
   const body = keyboardAvoiding ? (

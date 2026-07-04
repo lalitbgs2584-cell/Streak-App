@@ -1,28 +1,65 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Bell, ChevronRight, Plus, Sparkles } from 'lucide-react-native';
 import { Screen } from '@/components/layout/Screen';
+import { useHabits } from '@/lib/hooks/use-habits';
 import {
-  AccentPill,
-  HabitBadge,
-  ScreenTitle,
-  WEEKDAY_SHORT,
-  getHabitColor,
+    AccentPill,
+    HabitBadge,
+    ScreenTitle,
+    WEEKDAY_SHORT,
+    getHabitColor,
 } from '@/lib/mock/habit-ui';
 import { theme } from '@/lib/theme';
-import { useHabits } from '@/lib/hooks/use-habits';
+import { useRouter } from 'expo-router';
+import { Bell, ChevronRight, Plus, Sparkles } from 'lucide-react-native';
+import React, { useMemo } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+function getCurrentWeek(date: Date) {
+  const sunday = new Date(date);
+  sunday.setDate(date.getDate() - date.getDay());
+  sunday.setHours(0, 0, 0, 0);
+
+  return Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(sunday);
+    day.setDate(sunday.getDate() + index);
+    return day;
+  });
+}
+
+function isSameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+function isHabitScheduledOnDay(habit: { repeatDays: number[] }, date: Date) {
+  const dayIndex = date.getDay();
+  return habit.repeatDays.length === 7 || habit.repeatDays.includes(dayIndex);
+}
 
 export default function TodayScreen() {
   const router = useRouter();
   const { habits, loading } = useHabits();
   const completedCount = habits.filter((habit) => habit.completed).length;
   const progress = habits.length ? Math.round((completedCount / habits.length) * 100) : 0;
-  const currentDate = new Date().toLocaleDateString('en-US', {
+  const today = useMemo(() => new Date(), []);
+  const currentDate = today.toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'short',
     day: 'numeric',
   });
+  const calendarTitle = today.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
+
+  const weekDays = useMemo(() => getCurrentWeek(today), [today]);
+  const remindersByDay = useMemo(
+    () => weekDays.map((day) => habits.filter((habit) => isHabitScheduledOnDay(habit, day)).length),
+    [habits, weekDays]
+  );
+  const todayReminderCount = useMemo(
+    () => remindersByDay[weekDays.findIndex((day) => isSameDay(day, today))] ?? 0,
+    [remindersByDay, weekDays, today]
+  );
 
   return (
     <Screen padded={false} edges={['top', 'bottom']}>
@@ -44,16 +81,26 @@ export default function TodayScreen() {
 
         <View style={styles.calendarCard}>
           <View style={styles.calendarTopRow}>
-            <Text style={styles.calendarLabel}>Mon, May 3</Text>
-            <AccentPill label="3 reminders" active />
+            <Text style={styles.calendarLabel}>{calendarTitle}</Text>
+            <AccentPill label={`${todayReminderCount} ${todayReminderCount === 1 ? 'reminder' : 'reminders'}`} active />
           </View>
           <View style={styles.weekStrip}>
-            {WEEKDAY_SHORT.map((day, index) => (
-              <View key={`${day}-${index}`} style={[styles.weekDay, index === 1 && styles.weekDayActive]}>
-                <Text style={[styles.weekDayLabel, index === 1 && styles.weekDayLabelActive]}>{day}</Text>
-                <Text style={[styles.weekDayNumber, index === 1 && styles.weekDayNumberActive]}>{index + 1}</Text>
-              </View>
-            ))}
+            {weekDays.map((day, index) => {
+              const dayIndex = day.getDay();
+              const isToday = isSameDay(day, today);
+              const reminderCount = remindersByDay[index] ?? 0;
+              return (
+                <View key={day.toISOString()} style={[styles.weekDay, isToday && styles.weekDayActive]}>
+                  <Text style={[styles.weekDayLabel, isToday && styles.weekDayLabelActive]}>{WEEKDAY_SHORT[dayIndex]}</Text>
+                  <Text style={[styles.weekDayNumber, isToday && styles.weekDayNumberActive]}>{day.getDate()}</Text>
+                  {reminderCount > 0 ? (
+                    <View style={[styles.weekDayCount, isToday && styles.weekDayCountActive]}>
+                      <Text style={[styles.weekDayCountText, isToday && styles.weekDayCountTextActive]}>{reminderCount}</Text>
+                    </View>
+                  ) : null}
+                </View>
+              );
+            })}
           </View>
         </View>
 
@@ -217,6 +264,26 @@ const styles = StyleSheet.create({
   },
   weekDayNumberActive: {
     color: theme.colors.accent.DEFAULT,
+  },
+  weekDayCount: {
+    minWidth: 18,
+    paddingHorizontal: theme.spacing.xs,
+    paddingVertical: 2,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    marginTop: theme.spacing.xs,
+    alignItems: 'center',
+  },
+  weekDayCountActive: {
+    backgroundColor: theme.colors.accent.DEFAULT,
+  },
+  weekDayCountText: {
+    ...theme.typography.caption,
+    color: theme.colors.text.secondary,
+    fontWeight: '700',
+  },
+  weekDayCountTextActive: {
+    color: theme.colors.accent.text,
   },
   progressCard: {
     backgroundColor: theme.colors.surface.card,

@@ -35,7 +35,6 @@ export async function registerForPushNotificationsAsync() {
 
   const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
   const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
-  console.log("Token Data",tokenData.data)
   return tokenData.data;
 }
 
